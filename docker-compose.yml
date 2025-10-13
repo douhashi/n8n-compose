@@ -1,0 +1,19 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env
+    environment:
+      - GENERIC_TIMEZONE=Asia/Tokyo
+      - N8N_COMMUNITY_NODES_ENABLED=true
+      - N8N_ENCRYPTION_KEY
+      - N8N_HOST
+      - N8N_SECURE_COOKIE
+    volumes:
+      - n8n_data:/home/node/.n8n
+volumes:
+  n8n_data:
