@@ -1,10 +1,26 @@
 services:
+  https-portal:
+    image: steveltn/https-portal:1
+    container_name: https-portal
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    environment:
+      - DOMAINS
+      - STAGE
+      - CLIENT_MAX_BODY_SIZE
+    volumes:
+      - https_portal_data:/var/lib/https-portal
+    networks:
+      - n8n_network
+
   n8n:
     image: n8nio/n8n:latest
     container_name: n8n
     restart: unless-stopped
-    ports:
-      - "5678:5678"
     env_file:
       - .env
     environment:
@@ -15,5 +31,12 @@ services:
       - N8N_SECURE_COOKIE
     volumes:
       - n8n_data:/home/node/.n8n
+    networks:
+      - n8n_network
 volumes:
   n8n_data:
+  https_portal_data:
+
+networks:
+  n8n_network:
+    driver: bridge
