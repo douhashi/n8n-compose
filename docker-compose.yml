@@ -15,7 +15,6 @@ services:
       - TS_EXTRA_ARGS=--accept-routes --advertise-routes=10.51.0.0/24
       - TS_AUTHKEY=${TS_AUTHKEY}
     volumes:
-      - /dev/net/tun:/dev/net/tun
       - tailscale_data:/var/lib/tailscale
     networks:
       tailscale_network:
