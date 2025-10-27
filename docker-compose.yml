@@ -2,7 +2,7 @@ services:
   tailscale:
     image: tailscale/tailscale:stable
     container_name: tailscale
-    hostname: n8n-compose
+    hostname: n8n-compose-ts
     restart: unless-stopped
     cap_add:
       - net_admin
@@ -12,14 +12,13 @@ services:
     environment:
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
-      - TS_ROUTES=10.51.0.0/24
-      - TS_EXTRA_ARGS=--accept-routes
+      - TS_EXTRA_ARGS=--accept-routes --advertise-exit-node
       - TS_AUTHKEY=${TS_AUTHKEY}
+      - TS_SOCKS5_SERVER=:1055
+      - TS_OUTBOUND_HTTP_PROXY_LISTEN=:1080
     volumes:
       - /dev/net/tun:/dev/net/tun
       - tailscale_data:/var/lib/tailscale
-    ports:
-      - 5678:5678
     networks:
       tailscale_network:
         ipv4_address: 10.51.0.10
@@ -47,7 +46,6 @@ services:
     build: .
     container_name: n8n
     restart: unless-stopped
-    network_mode: "service:tailscale"
     depends_on:
       - tailscale
     env_file:
@@ -58,8 +56,16 @@ services:
       - N8N_ENCRYPTION_KEY
       - N8N_HOST
       - N8N_SECURE_COOKIE
+    ports:
+      - 5678:5678
     volumes:
       - n8n_data:/home/node/.n8n
+    networks:
+      default:
+      tailscale_network:
+        ipv4_address: 10.51.0.12
+    extra_hosts:
+      - "ts-proxy:10.51.0.10"
 volumes:
   n8n_data:
   https_portal_data:
