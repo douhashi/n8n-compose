@@ -12,10 +12,8 @@ services:
     environment:
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
-      - TS_EXTRA_ARGS=--accept-routes --advertise-exit-node
+      - TS_EXTRA_ARGS=--accept-routes --advertise-routes=10.51.0.0/24
       - TS_AUTHKEY=${TS_AUTHKEY}
-      - TS_SOCKS5_SERVER=:1055
-      - TS_OUTBOUND_HTTP_PROXY_LISTEN=:1080
     volumes:
       - /dev/net/tun:/dev/net/tun
       - tailscale_data:/var/lib/tailscale
@@ -60,12 +58,13 @@ services:
       - 5678:5678
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./add-route.sh:/add-route.sh:ro
+    cap_add:
+      - NET_ADMIN
     networks:
       default:
       tailscale_network:
         ipv4_address: 10.51.0.12
-    extra_hosts:
-      - "ts-proxy:10.51.0.10"
 volumes:
   n8n_data:
   https_portal_data:
