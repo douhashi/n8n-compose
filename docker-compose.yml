@@ -1,4 +1,27 @@
 services:
+  tailscale:
+    image: tailscale/tailscale:stable
+    container_name: tailscale
+    hostname: n8n-compose
+    restart: unless-stopped
+    cap_add:
+      - net_admin
+      - sys_module
+    env_file:
+      - .env
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TS_ROUTES=10.51.0.0/24
+      - TS_EXTRA_ARGS=--accept-routes
+      - TS_AUTHKEY=${TS_AUTHKEY}
+    volumes:
+      - /dev/net/tun:/dev/net/tun
+      - tailscale_data:/var/lib/tailscale
+    networks:
+      tailscale_network:
+        ipv4_address: 10.51.0.10
+
   https-portal:
     image: steveltn/https-portal:1
     container_name: https-portal
@@ -15,7 +38,8 @@ services:
     volumes:
       - https_portal_data:/var/lib/https-portal
     networks:
-      - n8n_network
+      - default
+      - tailscale_network
 
   n8n:
     build: .
@@ -29,14 +53,26 @@ services:
       - N8N_ENCRYPTION_KEY
       - N8N_HOST
       - N8N_SECURE_COOKIE
+    ports:
+      - 5678:5678
     volumes:
       - n8n_data:/home/node/.n8n
     networks:
-      - n8n_network
+      default:
+      tailscale_network:
+        ipv4_address: 10.51.0.12
 volumes:
   n8n_data:
   https_portal_data:
+  tailscale_data:
 
 networks:
-  n8n_network:
+  default:
     driver: bridge
+  tailscale_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.51.0.0/24
+          gateway: 10.51.0.1
