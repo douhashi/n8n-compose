@@ -58,6 +58,7 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ./add-route.sh:/add-route.sh:ro
+      - ./files:/home/node/files
     cap_add:
       - NET_ADMIN
     networks:
