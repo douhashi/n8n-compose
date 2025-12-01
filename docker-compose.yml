@@ -53,6 +53,9 @@ services:
       - N8N_ENCRYPTION_KEY
       - N8N_HOST
       - N8N_SECURE_COOKIE
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=14
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=50000
     ports:
       - 5678:5678
     volumes:
