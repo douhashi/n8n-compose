@@ -17,27 +17,6 @@ services:
     mem_limit: 256m
     restart: always
 
-  tailscale:
-    image: tailscale/tailscale:stable
-    container_name: tailscale
-    hostname: n8n-compose-ts
-    restart: unless-stopped
-    cap_add:
-      - net_admin
-      - sys_module
-    env_file:
-      - .env
-    environment:
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_USERSPACE=false
-      - TS_EXTRA_ARGS=--accept-routes --advertise-routes=10.51.0.0/24
-      - TS_AUTHKEY=${TS_AUTHKEY}
-    volumes:
-      - tailscale_data:/var/lib/tailscale
-    networks:
-      tailscale_network:
-        ipv4_address: 10.51.0.10
-
   https-portal:
     image: steveltn/https-portal:1
     container_name: https-portal
@@ -53,9 +32,6 @@ services:
       - CLIENT_MAX_BODY_SIZE
     volumes:
       - https_portal_data:/var/lib/https-portal
-    networks:
-      - default
-      - tailscale_network
 
   n8n:
     build: .
@@ -63,7 +39,6 @@ services:
     restart: unless-stopped
     depends_on:
       - db
-      - tailscale
     env_file:
       - .env
     environment:
@@ -85,28 +60,9 @@ services:
       - 5678:5678
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./add-route.sh:/add-route.sh:ro
       - ./files:/home/node/files
       - ./local-files:/tmp/local-files
-    cap_add:
-      - NET_ADMIN
-    networks:
-      default:
-      tailscale_network:
-        ipv4_address: 10.51.0.12
 volumes:
   n8n_data:
-  https_portal_data:
-  tailscale_data:
   postgres_data:
-
-networks:
-  default:
-    driver: bridge
-  tailscale_network:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.51.0.0/24
-          gateway: 10.51.0.1
+  https_portal_data:

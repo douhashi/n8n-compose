@@ -1,32 +1,37 @@
-# Build stage to install additional packages
+# Build stage to prepare yt-dlp and ffmpeg
 FROM alpine:3.22 AS builder
 
-RUN apk add --no-cache ffmpeg curl iproute2 iptables su-exec yt-dlp
+RUN apk add --no-cache \
+        ffmpeg \
+        yt-dlp \
+        python3
 
-# Prepare startup script
-COPY n8n-startup.sh /tmp/n8n-startup.sh
-RUN chmod +x /tmp/n8n-startup.sh
-
-# Final stage
+# Main stage - n8n with yt-dlp
 FROM n8nio/n8n:latest
 
+# Switch to root to copy binaries
 USER root
 
-# Copy installed packages from builder
-COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
-COPY --from=builder /usr/bin/ffprobe /usr/bin/ffprobe
-COPY --from=builder /usr/bin/curl /usr/bin/curl
-COPY --from=builder /sbin/ip /sbin/ip
-COPY --from=builder /usr/sbin/iptables /usr/sbin/iptables
-COPY --from=builder /sbin/su-exec /sbin/su-exec
-COPY --from=builder /usr/bin/yt-dlp /usr/bin/yt-dlp
+# Copy yt-dlp and dependencies
+COPY --from=builder /usr/bin/yt-dlp /usr/local/bin/yt-dlp
+COPY --from=builder /usr/bin/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=builder /usr/bin/ffprobe /usr/local/bin/ffprobe
+COPY --from=builder /usr/bin/python3 /usr/local/bin/python3
 
-# Copy dependencies
-COPY --from=builder /usr/lib/ /usr/lib/
-COPY --from=builder /lib/ /lib/
+# Copy Python and library dependencies
+COPY --from=builder /usr/lib/python3* /usr/lib/
+COPY --from=builder /usr/lib/libpython* /usr/lib/
+COPY --from=builder /usr/lib/libav* /usr/lib/
+COPY --from=builder /usr/lib/libsw* /usr/lib/
+COPY --from=builder /usr/lib/libpostproc* /usr/lib/
+COPY --from=builder /usr/lib/lib*.so* /usr/lib/
 
-# Copy startup script with execute permissions
-COPY --from=builder /tmp/n8n-startup.sh /usr/local/bin/n8n-startup.sh
+# Make binaries executable
+RUN chmod +x /usr/local/bin/yt-dlp /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/python3 || true
 
-ENTRYPOINT ["/usr/local/bin/n8n-startup.sh"]
+# Switch back to node user (n8n standard)
+USER node
+
+# Use the official entrypoint
+ENTRYPOINT ["tini", "--", "/docker-entrypoint.sh"]
 
