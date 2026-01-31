@@ -12,22 +12,30 @@ FROM n8nio/n8n:latest
 # Switch to root to copy binaries
 USER root
 
-# Copy yt-dlp and dependencies
+# Copy Python to correct location (matching yt-dlp shebang)
+COPY --from=builder /usr/bin/python3 /usr/bin/python3
+
+# Copy yt-dlp and ffmpeg
 COPY --from=builder /usr/bin/yt-dlp /usr/local/bin/yt-dlp
 COPY --from=builder /usr/bin/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=builder /usr/bin/ffprobe /usr/local/bin/ffprobe
-COPY --from=builder /usr/bin/python3 /usr/local/bin/python3
 
-# Copy Python and library dependencies
-COPY --from=builder /usr/lib/python3* /usr/lib/
-COPY --from=builder /usr/lib/libpython* /usr/lib/
+# Copy Python libraries and dependencies
+COPY --from=builder /usr/lib/python3.12 /usr/lib/python3.12
+COPY --from=builder /usr/lib/libpython3.12.so* /usr/lib/
+COPY --from=builder /usr/lib/libffi.so* /usr/lib/
+COPY --from=builder /usr/lib/libexpat.so* /usr/lib/
+COPY --from=builder /usr/lib/libbz2.so* /usr/lib/
+COPY --from=builder /usr/lib/libmpdec.so* /usr/lib/
+COPY --from=builder /usr/lib/libreadline.so* /usr/lib/
+COPY --from=builder /usr/lib/libsqlite3.so* /usr/lib/
+COPY --from=builder /usr/lib/libncursesw.so* /usr/lib/
+
+# Copy ffmpeg dependencies
 COPY --from=builder /usr/lib/libav* /usr/lib/
 COPY --from=builder /usr/lib/libsw* /usr/lib/
 COPY --from=builder /usr/lib/libpostproc* /usr/lib/
 COPY --from=builder /usr/lib/lib*.so* /usr/lib/
-
-# Make binaries executable
-RUN chmod +x /usr/local/bin/yt-dlp /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/python3 || true
 
 # Switch back to node user (n8n standard)
 USER node
