@@ -37,6 +37,11 @@ COPY --from=builder /usr/lib/libsw* /usr/lib/
 COPY --from=builder /usr/lib/libpostproc* /usr/lib/
 COPY --from=builder /usr/lib/lib*.so* /usr/lib/
 
+# Install openssh-client and coder CLI (used by n8n Execute Command node to send keystrokes to Coder workspaces)
+RUN apk add --no-cache openssh-client curl ca-certificates && \
+    curl -fsSL https://coder.com/install.sh | sh -s -- --method=standalone --prefix=/usr/local && \
+    coder version
+
 # Switch back to node user (n8n standard)
 USER node
 
